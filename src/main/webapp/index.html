@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .wrap_box1 {display: inline-block; padding:5%; border:1px solid white; height:200px; display: flex; justify-content: center; align-items: center;}
+        .box1 {display:inline-block; border:1px solid white; width:100%; height:100%; display: flex; justify-content: center; align-items: center;}
+        .wrap_box2 {display: inline-block; padding:5%; border:1px solid white; height:200px; display: flex; justify-content: center; align-items: center;}
+        .box2 {display:inline-block; border:1px solid white; width:100%; height:100%; display: flex; justify-content: center; align-items: center;}
+        td{border-width : 2px; border-color : black; font-weight: 600;}
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <link href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
+    <!--<script src="resources/bootstrap-msg.js"></script>-->
+    <script type="text/javascript">
+    	var lecture = false;
+    	function loadStatus(idx){
+    		var getAPI1 = "api/getWarning?idx=" + idx;
+    		var getAPI2 = "api/getStdStatus?idx=" + idx; // 각 학생 자리 별 상태 조회
+    		var colValue = 0; // 학생의 상태 등급에 대한 평가 척도
+    		var error = false;
+			var notAttend = false; // 출석 여부
+			var badWarning = false;
+			var nonWarning = false;
+			var oldBadWarning = false;
+			var oldNonWarning = false;
+			$.getJSON(getAPI2).done(function(data){
+				$.each(data, function(key, val){
+					if(key == "reason"){
+						toastr.error(val, {timeOut: 5000});
+						error = true;
+						return false;
+					}
+					else if(key == "attendTime"){
+						if(val == "0"){
+							notAttend = true;
+							return false;
+						}
+					}
+					else if(key == "badWearTime"){
+						var val = parseInt(val);
+						colValue += val;
+						if(val >= 60){
+							badWarning = true;
+						}
+					}
+					else if(key == "notWearTime"){
+						var val = parseInt(val);
+						colValue += (2 * val);
+						if(val >= 30){
+							nonWarning = true;
+						}
+					}
+					else if(key == "bad_warning"){
+						if(val == "1"){
+							oldBadWarning = true;
+						}
+					}
+					else if(key == "non_warning"){
+						if(val == "1"){
+							oldNonWarning = true;
+						}
+					}
+				});
+				if(badWarning == true && oldBadWarning == false){
+					toastr.warning(idx + "번 학생의 마스크 착용 상태가 좋지 않습니다. 주의해주세요.", {timeOut: 3000});
+					$.getJSON("api/setWarning?idx=" + idx + "&type=bad").done();
+				}
+				if(nonWarning == true && oldNonWarning == false){
+					toastr.error(idx + "번 학생이 마스크를 착용하지 않고 있습니다.", {timeOut: 5000});
+					$.getJSON("api/setWarning?idx=" + idx + "&type=non").done();
+				}
+				if(notAttend == false && error == false){
+					var id = "#std" + idx;
+					console.log(id);
+					if(colValue >= 600){ // nonWearTime 기준 300초(5분)
+						$(id).attr("style", "background-color: red");
+					}
+					else if(colValue >= 300){ // nonWearTime 기준 150초(2분 30초)
+						$(id).attr("style", "background-color: yellow");
+					}
+					else{
+						$(id).attr("style", "background-color: green");
+					}
+				}
+			});
+    		if(idx < 38){
+    			setTimeout(function(){
+    				loadStatus(idx + 1);
+    			}, 100); // 500ms(0.5초) 단위로 다음 학생 체크
+    		}
+    		else{
+    			setTimeout(function(){
+    				loadStatus(1);
+    			}, 2000); // 38명 학생 체크 완료되면 20초 대기 후 1번 학생부터 다시 체크
+    		}
+    	}
+    	function buttonChange(){
+    		$.getJSON("api/getLectureStatus").done(function(data){
+				$.each(data, function(key, val){
+					if(key == "status"){
+						if(val == "true"){
+							$("#change").html("수업 종료");
+						}
+						else{
+							$("#change").html("수업 시작");
+						}
+					}
+				});
+			});
+    	}
+    	$(function(){
+    		buttonChange(); // 현재 상태를 조회하고 버튼 세팅
+    		$("#change").click(function(){ // 수업 시작/종료 버튼의 이벤트 처리
+    			$.getJSON("api/getLectureStatus").done(function(data){
+    				$.each(data, function(key, val){
+    					if(key == "status"){
+    						if(val == true){
+    							lecture = true; // 수업 진행 중일 시 변수 변경
+    						}
+    					}
+    				});
+    			});
+    			$.getJSON("api/changeLectureStatus"); // 상태 변경 API 호출
+    			if(lecture = true){
+    				setTimeout(buttonChange(), 60000); // 기존 데이터 수집을 위한 대기시간 60초 대기
+    			}
+    			else {buttonChange();}
+    		});
+    		loadStatus(1);
+    	});
+    </script>
+</head>
+<body>
+    <h1 align = center>마스크 착용 및 출석 여부 조회</h1>
+    <div class="wrap_box1">
+        <div class="box1">
+            <table border="1" cellspacing="0" frame = void width = 30% height = 100%>
+                <tr>
+                    <td id="std1" align = center>1</td><td id="std5" align = center>5</td>
+                </tr>
+                <tr>
+                    <td id="std2" align = center>2</td><td id="std6" align = center>6</td>
+                </tr>
+                <tr>
+                    <td id="std3" align = center>3</td><td id="std7" align = center>7</td>
+                </tr>
+                <tr>
+                    <td id="std4" align = center>4</td><td id="std8" align = center>8</td>
+                </tr>
+            </table>
+        </div>
+        <div class="box1">
+            <table border="1" cellspacing="0" frame = void width = 30% height = 50%>
+                <tr>
+                    <td id="std9" align = center>9</td>
+                </tr>
+                <tr>
+                    <td id="std11" align = center>10</td><td id="std11" align = center>11</td>
+                </tr>
+            </table>
+        </div>
+        <div class="box1">
+            <table border="1" cellspacing="0" frame = void width = 30% height = 100%>
+                <tr>
+                    <td id="std16" align = center>12</td><td id="std16" align = center>16</td>
+                </tr>
+                <tr>
+                    <td id="std17" align = center>13</td><td id="std17" align = center>17</td>
+                </tr>
+                <tr>
+                    <td id="std18" align = center>14</td><td id="std18" align = center>18</td>
+                </tr>
+                <tr>
+                    <td id="std19" align = center>15</td><td id="std19" align = center>19</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <br />
+    <div class="wrap_box2">
+        <div class="box2">
+            <table border="1" cellspacing="0" frame = void width = 30% height = 100%>
+                <tr>
+                    <td id="std20" align = center>20</td><td id="std24" align = center>24</td>
+                </tr>
+                <tr>
+                    <td id="std21" align = center>21</td><td id="std25" align = center>25</td>
+                </tr>
+                <tr>
+                    <td id="std22" align = center>22</td><td id="std26" align = center>26</td>
+                </tr>
+                <tr>
+                    <td id="std23" align = center>23</td><td id="std27" align = center>27</td>
+                </tr>
+            </table>
+        </div>
+        <div class="box2">
+            <table border="1" cellspacing="0" frame = void width = 30% height = 50%>
+                <tr>
+                    <td id="std28" align = center>28</td>
+                </tr>
+                <tr>
+                    <td id="std29" align = center>29</td><td id="std30" align = center>30</td>
+                </tr>
+            </table>
+        </div>
+        <div class="box2">
+            <table border="1" cellspacing="0" frame = void width = 30% height = 100%>
+                <tr>
+                    <td id="std31" align = center>31</td><td id="std35" align = center>35</td>
+                </tr>
+                <tr>
+                    <td id="std32" align = center>32</td><td id="std36" align = center>36</td>
+                </tr>
+                <tr>
+                    <td id="std33" align = center>33</td><td id="std37" align = center>37</td>
+                </tr>
+                <tr>
+                    <td id="std34" align = center>34</td><td id="std38" align = center>38</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+	<button id="change">수업 여부</button>
+    
+</body>
+</html>
