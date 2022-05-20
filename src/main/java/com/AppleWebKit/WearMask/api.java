@@ -36,11 +36,11 @@ public class api {
 			out.put("result","FAILED");
 			out.put("reason","Lecture not started");
 		}
-		String idx = list.get("idx");
-		int totalTime = Integer.parseInt(list.get("Time"));
-		int goodCount = Integer.parseInt(list.get("Good"));
-		int badCount = Integer.parseInt(list.get("Bad"));
-		int nonCount = Integer.parseInt(list.get("Non"));
+		String idx = list.get("Idx");
+		int totalTime = (int)Double.parseDouble(list.get("Time"));
+		int goodCount = (int)Double.parseDouble(list.get("Good"));
+		int badCount = (int)Double.parseDouble(list.get("Bad"));
+		int nonCount = (int)Double.parseDouble(list.get("Non"));
 		int attendCount = goodCount + badCount + nonCount;
 		
 		try {
@@ -51,10 +51,10 @@ public class api {
 			pstmt.setString(1, idx);
 			rs = pstmt.executeQuery();
 			if(rs.next()) {
-				goodCount += rs.getInt("goodMaskTime");
-				badCount += rs.getInt("badMaskTime");
-				nonCount += rs.getInt("nonMaskTime");
-				attendCount += rs.getInt("attendTime");
+				goodCount = rs.getInt("goodMaskTime");
+				badCount = rs.getInt("badMaskTime");
+				nonCount = rs.getInt("nonMaskTime");
+				attendCount = rs.getInt("attendTime");
 				String USER_SET = "UPDATE studentstatus SET attendTime=?, goodMaskTime=?, badMaskTime=?, nonMaskTime=? WHERE idx=?"; // 수집된 정보로 DB 갱신
 				pstmt = conn.prepareStatement(USER_SET);
 				pstmt.setString(1, Integer.toString(attendCount));
@@ -190,9 +190,8 @@ public class api {
 					int nonCount = rs.getInt("nonMaskTime");
 					int attendCount = rs.getInt("attendTime");
 					int attend = 0;
-					int minusPoint = 0;
+					int minusPoint = (int)((nonCount * 2 + badCount) / 600);
 					if(attendCount >= (int)(studyTime * 0.75)) attend = 1;
-					if(nonCount >= 30) minusPoint = -1;
 					String USER_SET = "UPDATE studentreport SET attend=?, maskminuspoint=? WHERE idx=?"; // 수집된 정보로 DB 갱신
 					pstmt = conn.prepareStatement(USER_SET);
 					pstmt.setString(1, Integer.toString(attend));
@@ -200,7 +199,6 @@ public class api {
 					pstmt.setString(3, Integer.toString(idx));
 					pstmt.executeUpdate();
 				}
-				reset();
 				out.put("result","SUCCESS");
 				out.put("reason", "");
 				return out;
@@ -215,6 +213,7 @@ public class api {
 			studyStartTime = System.currentTimeMillis() / 1000L;
 			lecture = true;
 			lecture_true = true;
+			reset();
 			out.put("result","SUCCESS");
 			out.put("reason", "");
 			return out;
