@@ -91,7 +91,7 @@
     		if(idx < 38){
     			setTimeout(function(){
     				loadStatus(idx + 1);
-    			}, 100); // 500ms(0.5초) 단위로 다음 학생 체크
+    			}, 500); // 500ms(0.5초) 단위로 다음 학생 체크
     		}
     		else{
     			setTimeout(function(){
@@ -113,6 +113,22 @@
 				});
 			});
     	}
+    	function studyStatusCheck(){
+    		$.getJSON("api/getLectureStatus").done(function(data){
+				$.each(data, function(key, val){
+					if(key == "status"){
+						if(val == "true"){
+							loadStatus(1);
+						}
+						else{
+							setTimeout(function(){
+				    			studyStatusCheck();
+							}, 1000);
+						}
+					}
+				});
+			});
+    	}
     	$(function(){
     		buttonChange(); // 현재 상태를 조회하고 버튼 세팅
     		$("#change").click(function(){ // 수업 시작/종료 버튼의 이벤트 처리
@@ -126,12 +142,16 @@
     				});
     			});
     			$.getJSON("api/changeLectureStatus"); // 상태 변경 API 호출
-    			if(lecture = true){
-    				setTimeout(buttonChange(), 60000); // 기존 데이터 수집을 위한 대기시간 60초 대기
+    			if(lecture == true){
+    				buttonChange() // 기존 데이터 수집을 위한 대기시간 60초 대기
+    				toastr.success("수업을 시작했습니다. 집계를 시작합니다.");
     			}
-    			else {buttonChange();}
+    			else {
+    				buttonChange();
+    				toastr.success("수업을 종료합니다. 60초 후에 집계를 종료합니다.");
+    			}
     		});
-    		loadStatus(1);
+    		studyStatusCheck();
     	});
     </script>
 </head>

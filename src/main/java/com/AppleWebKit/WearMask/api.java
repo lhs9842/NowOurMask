@@ -18,21 +18,24 @@ import com.AppleWebKit.WearMask.JDBCUtil;
 @RestController
 @RequestMapping(value = "/api")
 public class api {
-	private boolean lecture = false;
+	private int dataInterval = 60; // 인공지능 측에서 데이터가 넘어오는 주기 세팅
+	private boolean lecture = false; // 수업 시작/종료 여부
+	private boolean lecture_true = false; // 수업 종료 후 데이터 인터벌까지의 대기를 포함한 데이터 수집 여부
+	private Long studyStartTime;
 	private Connection conn = null;
 	private PreparedStatement pstmt = null;
 	private ResultSet rs = null;
+	
 	// 각 자리의 인공지능 SW에서 전송된 좌석 별 착석 및 마스크 착용 여부 처리 API
 	// /api/setStdStatus, POST Only, JSON 형식으로  idx, good, bad, non 전송
 	@RequestMapping(value = "/setStdStatus", method = RequestMethod.POST)
 	@ResponseBody
 	public Map<String, String> setStdStatus(@RequestBody Map<String, String> list) {
 		Map<String, String> out = new HashMap<String, String>();
-		if(!lecture) {
+		if(!lecture_true) {
 			out.put("result","FAILED");
 			out.put("reason","Lecture not started");
 		}
-		int dataInterval = 30;
 		String idx = list.get("idx");
 		int totalTime = Integer.parseInt(list.get("Time"));
 		int goodCount = Integer.parseInt(list.get("Good"));
@@ -170,9 +173,14 @@ public class api {
 		Map<String, String> out = new HashMap<String, String>();
 		if(lecture) {
 			try {
-				TimeUnit.SECONDS.sleep(30);
+				Long studyEndTime = System.currentTimeMillis() / 1000L;
+				int studyTime = (int)(studyEndTime - studyStartTime);
 				lecture = false;
+				TimeUnit.SECONDS.sleep(dataInterval);
+				lecture_true = false;
 				// attend save logic
+				conn = JDBCUtil.getConnect();
+				
 				reset();
 				out.put("result","SUCCESS");
 				out.put("reason", "");
@@ -185,7 +193,9 @@ public class api {
 			}
 		}
 		else {
+			studyStartTime = System.currentTimeMillis() / 1000L;
 			lecture = true;
+			lecture_true = true;
 			out.put("result","SUCCESS");
 			out.put("reason", "");
 			return out;
