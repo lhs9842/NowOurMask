@@ -180,7 +180,26 @@ public class api {
 				lecture_true = false;
 				// attend save logic
 				conn = JDBCUtil.getConnect();
-				
+				String USER_GET = "SELECT * FROM studentstatus";
+				pstmt = conn.prepareStatement(USER_GET);
+				rs = pstmt.executeQuery();
+				while(rs.next()) {
+					int idx = rs.getInt("idx");
+					int goodCount = rs.getInt("goodMaskTime");
+					int badCount = rs.getInt("badMaskTime");
+					int nonCount = rs.getInt("nonMaskTime");
+					int attendCount = rs.getInt("attendTime");
+					int attend = 0;
+					int minusPoint = 0;
+					if(attendCount >= (int)(studyTime * 0.75)) attend = 1;
+					if(nonCount >= 30) minusPoint = -1;
+					String USER_SET = "UPDATE studentreport SET attend=?, maskminuspoint=? WHERE idx=?"; // 수집된 정보로 DB 갱신
+					pstmt = conn.prepareStatement(USER_SET);
+					pstmt.setString(1, Integer.toString(attend));
+					pstmt.setString(2, Integer.toString(minusPoint));
+					pstmt.setString(3, Integer.toString(idx));
+					pstmt.executeUpdate();
+				}
 				reset();
 				out.put("result","SUCCESS");
 				out.put("reason", "");
