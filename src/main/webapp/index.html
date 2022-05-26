@@ -131,25 +131,30 @@
     	}
     	$(function(){
     		buttonChange(); // 현재 상태를 조회하고 버튼 세팅
+    		
     		$("#change").click(function(){ // 수업 시작/종료 버튼의 이벤트 처리
+    			lecture = false;
     			$.getJSON("api/getLectureStatus").done(function(data){
     				$.each(data, function(key, val){
     					if(key == "status"){
-    						if(val == true){
-    							lecture = true; // 수업 진행 중일 시 변수 변경
+    						if(val == "true"){
+    							buttonChange();
+                				toastr.success("수업을 종료합니다. 60초 후에 집계를 종료합니다.");
+    						}
+    						else{
+    							buttonChange();
+                				toastr.success("수업을 시작했습니다. 집계를 시작합니다.");
     						}
     					}
+            			else {
+            				buttonChange();
+            				toastr.success("수업을 시작했습니다. 집계를 시작합니다.");
+            			}
     				});
+    				
     			});
     			$.getJSON("api/changeLectureStatus"); // 상태 변경 API 호출
-    			if(lecture == true){
-    				buttonChange() // 기존 데이터 수집을 위한 대기시간 60초 대기
-    				toastr.success("수업을 시작했습니다. 집계를 시작합니다.");
-    			}
-    			else {
-    				buttonChange();
-    				toastr.success("수업을 종료합니다. 60초 후에 집계를 종료합니다.");
-    			}
+    			
     		});
     		studyStatusCheck();
     	});
@@ -246,7 +251,8 @@
             </table>
         </div>
     </div>
-	<button id="change">수업 여부</button>
-    
+    <div>
+		<button id="change">수업 여부</button>
+    </div>
 </body>
 </html>
