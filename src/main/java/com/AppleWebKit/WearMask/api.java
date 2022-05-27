@@ -190,7 +190,7 @@ public class api {
 					int attendCount = rs.getInt("attendTime");
 					int attend = 0;
 					int minusPoint = (int)((nonCount * 2 + badCount) / 600);
-					if(attendCount >= (int)(studyTime * 0.75)) attend = 1;
+					if(attendCount >= (int)(studyTime * 0.6)) attend = 1;
 					String USER_SET = "UPDATE studentreport SET attend=?, maskminuspoint=? WHERE idx=?"; // 수집된 정보로 DB 갱신
 					pstmt = conn.prepareStatement(USER_SET);
 					pstmt.setString(1, Integer.toString(attend));
