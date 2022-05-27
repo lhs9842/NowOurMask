@@ -10,7 +10,7 @@
 	<meta charset="UTF-8">
 	<title>금일 수업 </title>
 	<style>
-		tr{border-width : 2px; border-color : black; font-weight: 600;}
+		th{border-width : 2px; border-color : black; font-weight: 600;}
 	</style>
 </head>
 <body>

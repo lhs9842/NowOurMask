@@ -178,7 +178,6 @@ public class api {
 				lecture = false;
 				TimeUnit.SECONDS.sleep(dataInterval);
 				lecture_true = false;
-				// attend save logic
 				conn = JDBCUtil.getConnect();
 				String USER_GET = "SELECT * FROM studentstatus";
 				pstmt = conn.prepareStatement(USER_GET);

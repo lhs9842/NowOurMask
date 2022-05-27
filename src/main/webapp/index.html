@@ -108,6 +108,11 @@
 						}
 						else{
 							$("#change").html("수업 시작");
+							setTimeout(function(){
+								var html = '<button onclick="window.open(\'\./attend.jsp\');">출석 조회</button>';
+								$("#button_sel").append(html);
+								toastr.success("집계가 종료되었습니다.");
+							}, 65000);
 						}
 					}
 				});
@@ -251,8 +256,9 @@
             </table>
         </div>
     </div>
-    <div>
+    <div id="button_sel">
 		<button id="change">수업 여부</button>
+		
     </div>
 </body>
 </html>
