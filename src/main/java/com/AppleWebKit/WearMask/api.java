@@ -46,34 +46,18 @@ public class api {
 		try {
 			conn = JDBCUtil.getConnect();
 			
-			String USER_GET = "SELECT * FROM studentstatus WHERE idx=?";
-			pstmt = conn.prepareStatement(USER_GET);
-			pstmt.setString(1, idx);
-			rs = pstmt.executeQuery();
-			if(rs.next()) {
-				goodCount = rs.getInt("goodMaskTime");
-				badCount = rs.getInt("badMaskTime");
-				nonCount = rs.getInt("nonMaskTime");
-				attendCount = rs.getInt("attendTime");
-				String USER_SET = "UPDATE studentstatus SET attendTime=?, goodMaskTime=?, badMaskTime=?, nonMaskTime=? WHERE idx=?"; // 수집된 정보로 DB 갱신
-				pstmt = conn.prepareStatement(USER_SET);
-				pstmt.setString(1, Integer.toString(attendCount));
-				pstmt.setString(2, Integer.toString(goodCount));
-				pstmt.setString(3, Integer.toString(badCount));
-				pstmt.setString(4, Integer.toString(nonCount));
-				pstmt.setString(5, idx);
-				int result = pstmt.executeUpdate();
-				if(result == 1) {
-					out.put("result","SUCCESS");
-					out.put("reason", "");
-					return out;
-				}
-				else {
-					
-					out.put("result","FAILED");
-					out.put("reason", "Database Execute Failed");
-					return out;
-				}
+			String USER_SET = "UPDATE studentstatus SET attendTime=?, goodMaskTime=?, badMaskTime=?, nonMaskTime=? WHERE idx=?"; // 수집된 정보로 DB 갱신
+			pstmt = conn.prepareStatement(USER_SET);
+			pstmt.setString(1, Integer.toString(attendCount));
+			pstmt.setString(2, Integer.toString(goodCount));
+			pstmt.setString(3, Integer.toString(badCount));
+			pstmt.setString(4, Integer.toString(nonCount));
+			pstmt.setString(5, idx);
+			int result = pstmt.executeUpdate();
+			if(result == 1) {
+				out.put("result","SUCCESS");
+				out.put("reason", "");
+				return out;
 			}
 			else {
 				out.put("result","FAILED");
